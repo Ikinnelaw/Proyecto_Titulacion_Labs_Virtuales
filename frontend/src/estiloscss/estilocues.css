@@ -1,0 +1,18 @@
+/* Estilo para el fondo del cuestionario */
+.container-background {
+  background-color: rgb(183, 224, 217); /* Fondo más suave */
+  padding: 20px;
+  border-radius: 5px;
+  border: 1px solid #dcdcdc; /* Borde más claro */
+}
+
+.tiempo-cuestionario {
+  width: 200px;
+  margin-top: 10px;
+}
+
+.tiempo-cuestionario-label {
+  font-size: 16px;
+  font-weight: bold;
+}
+
