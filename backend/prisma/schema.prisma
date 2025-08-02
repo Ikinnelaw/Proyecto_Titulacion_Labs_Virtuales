@@ -1,0 +1,131 @@
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "debian-openssl-1.1.x"]
+}
+
+datasource db {
+    provider = "mysql"
+    url      = env("DATABASE_URL")
+}
+
+model Usuario {
+    id                      Int                       @id @default(autoincrement())
+    nombre                  String                    @db.VarChar(20)
+    apellido_paterno        String                    @db.VarChar(25)
+    apellido_materno        String                    @db.VarChar(25)
+    correo                  String                    @unique @db.VarChar(50)
+    contrasena              String                    @db.VarChar(191)
+    creadoEl                DateTime                  @default(now())
+    estado                  Boolean                   @default(true)
+    verificado              Boolean                   @default(false)
+    UsuarioEnGrupo          UsuarioEnGrupo[]
+    CodigoDeValidacion        CodigoDeValidacion?
+    CalificacionesActividad CalificacionesActividad[]
+}
+
+//codigosDeValidacion
+model CodigoDeValidacion {
+    id             Int       @id @default(autoincrement())
+    codigo         String    @unique @db.VarChar(191)
+    fechaCaducidad DateTime?
+    estado         Boolean   @default(true)
+    Usuario        Usuario   @relation(fields: [usuarioCorreo], references: [correo])
+    usuarioCorreo  String    @unique
+}
+
+model Rol {
+    id          Int              @id @default(autoincrement())
+    nombre      String           @unique
+    rolEnGrupos UsuarioEnGrupo[]
+}
+
+model Grupo {
+    id          Int              @id @default(autoincrement())
+    nombre      String           @db.VarChar(50)
+    descripcion String?
+    clave       String           @unique
+    creadoEl    DateTime         @default(now())
+    Usuarios    UsuarioEnGrupo[]
+    Actividad   Actividad[]
+}
+
+model UsuarioEnGrupo {
+    usuarioId Int
+    grupoId   Int
+    rolId     Int
+    Usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+    Grupo     Grupo   @relation(fields: [grupoId], references: [id], onDelete: Cascade)
+    Rol       Rol     @relation(fields: [rolId], references: [id])
+
+    @@id(fields: [usuarioId, grupoId])
+}
+
+model Actividad {
+    id          Int       @id @default(autoincrement())
+    nombre      String
+    descripcion String?
+    creadoEl    DateTime  @default(now())
+    fechaLimite DateTime?
+    grupoId     Int
+    Grupo       Grupo     @relation(fields: [grupoId], references: [id], onDelete: Cascade)
+    tipo        String
+
+    Calificaciones       CalificacionesActividad[]
+    PreguntaCuestionario PreguntaCuestionario[]
+    PreguntaEjercicio    PreguntaEjercicio[]
+}
+
+model PreguntaCuestionario {
+    id                 Int                  @id @default(autoincrement())
+    pregunta           String
+    multimedia         Bytes?               @db.LongBlob
+    actividadId        Int
+    Actividad          Actividad            @relation(fields: [actividadId], references: [id], onDelete: Cascade)
+    OpcionCuestionario OpcionCuestionario[]
+}
+
+model OpcionCuestionario {
+    id         Int     @id @default(autoincrement())
+    textOpcion String
+    multimedia Bytes?  @db.LongBlob
+    correcta   Boolean
+
+    PreguntaCuestionario   PreguntaCuestionario? @relation(fields: [preguntaCuestionarioId], references: [id])
+    preguntaCuestionarioId Int?
+}
+
+model PreguntaEjercicio {
+    id         Int     @id @default(autoincrement())
+    pregunta   String
+    multimedia Bytes?  @db.LongBlob // Datos binarios de la imagen
+    consejo    String?
+    ClaveVideo String?
+
+    actividadId     Int
+    Actividad       Actividad         @relation(fields: [actividadId], references: [id], onDelete: Cascade)
+    OpcionEjercicio OpcionEjercicio[]
+
+    @@unique([id, actividadId])
+}
+
+model OpcionEjercicio {
+    id Int   @id @default(autoincrement())
+    a  Float
+    b  Float
+    c  Float
+    r1 Float
+    r2 Float
+
+    preguntaEjercicioId Int
+    Pregunta            PreguntaEjercicio @relation(fields: [preguntaEjercicioId], references: [id], onDelete: Cascade)
+}
+
+model CalificacionesActividad {
+    usuarioId    Int
+    actividadId  Int
+    calificacion Float
+    Usuario      Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+    Actividad    Actividad @relation(fields: [actividadId], references: [id], onDelete: Cascade)
+
+    @@id([usuarioId, actividadId])
+}
